@@ -3,170 +3,422 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BattleGraphs - Generator</title>
+    <title>HappyPuzzles - Task Cards</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        .card-container, .kant-container, .back-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            padding: 0px;
+        /* ============================================================
+           PAGE SETUP
+           Print at 100 % scale (never "fit to page").
+           Duplex setting: "Flip on long edge".
+           ============================================================ */
+        @page {
+            size: A4 portrait;   /* 210 mm x 297 mm */
+            margin: 0;           /* all spacing controlled below        */
         }
+
+        @media print {
+            body {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+                /* CRITICAL: the screen body padding must be zeroed at
+                   print time, otherwise the sheet is pushed down ~7 mm
+                   and the 3rd row overflows onto the next page.        */
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+            }
+            .no-print { display: none !important; }
+            /* Remove screen-only box-shadow and margin on sheets */
+            .sheet {
+                margin: 0 !important;
+                box-shadow: none !important;
+            }
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 20px;      /* screen preview spacing only */
+            background: #ccc;
+            font-family: 'Trebuchet MS', Arial, sans-serif;
+        }
+
+        /* ============================================================
+           SHEET  ==  one printed A4 page (210 mm x 297 mm)
+
+           Padding  = 9 mm  →  safe margin for most desktop printers.
+           Gap      = 2 mm  →  appears as thin cut-guide lines between cards.
+
+           Resulting cell size (auto from grid):
+             width  = (210 - 2*9 - 2*2) / 3 = 188/3 ≈ 62.7 mm
+             height = (297 - 2*9 - 2*2) / 3 = 275/3 ≈ 91.7 mm
+           ≈ standard poker card (63.5 mm x 88.9 mm) ✓
+           ============================================================ */
+        .sheet {
+            width: 210mm;
+            height: 297mm;
+            padding: 9mm;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 2mm;
+            background: white;
+            position: relative;
+            /* screen preview */
+            margin: 0 auto 20px auto;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            /* paging */
+            page-break-after: always;
+            break-after: page;
+        }
+        .sheet:last-child {
+            page-break-after: auto;
+            break-after: auto;
+        }
+
+        /* ============================================================
+           DUPLEX BACK-SIDE ALIGNMENT (long-edge flip)
+           ============================================================
+           NO CSS transforms are used for alignment — they introduce
+           sub-pixel rounding that causes tiny size/position differences
+           between front and back renderings.
+
+           Instead, the back cards are placed in column-reversed order
+           in JavaScript:  [2,1,0, 5,4,3, 8,7,6]
+           When the printer flips on the long edge (L<->R mirror):
+             • printed col 0  becomes physical col 2  → aligns front col 2 ✓
+             • printed col 1  stays   physical col 1  → aligns front col 1 ✓
+             • printed col 2  becomes physical col 0  → aligns front col 0 ✓
+           Rows are unaffected by a long-edge flip ✓
+           ============================================================ */
+
+        /* ============================================================
+           CUT GUIDES  –  dashed lines in the gap between cards
+           ============================================================ */
+        .guide {
+            position: absolute;
+            pointer-events: none;
+        }
+        /* Horizontal guides between rows */
+        .h-guide {
+            left: 7mm;
+            right: 7mm;
+            height: 0;
+            border-top: 0.4px dashed #bbb;
+        }
+        /* Vertical guides between columns */
+        .v-guide {
+            top: 7mm;
+            bottom: 7mm;
+            width: 0;
+            border-left: 0.4px dashed #bbb;
+        }
+
+        /* Registration marks — + crosshairs at the 4 outer corners
+           of the card grid. Printed on BOTH front and back so you
+           can hold the sheet to a light and verify duplex alignment. */
+        .reg-mark {
+            position: absolute;
+            width: 8mm;
+            height: 8mm;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .reg-mark::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            border-top: 0.5px solid #999;
+            transform: translateY(-50%);
+        }
+        .reg-mark::after {
+            content: '';
+            position: absolute;
+            left: 50%; top: 0; bottom: 0;
+            border-left: 0.5px solid #999;
+            transform: translateX(-50%);
+        }
+
+        /* ============================================================
+           CARD CELLS  –  front (.card) and back (.back)
+           MUST share identical box geometry — do NOT hard-code mm sizes
+           here; let the grid decide so the two sides cannot diverge.
+           ============================================================ */
         .card, .back {
-            width: 2.5in;
-            height: 3.5in;
-            border-radius: 10px;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Front --- */
+        .card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 4px solid #3D5A80;
+            border-radius: 8px;
+            color: #1a2e3b;
+        }
+
+        /* Top bar */
+        .card-banner {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 18px;
+            background: #3D5A80;
+            border-radius: 3px 3px 0 0;
+            z-index: 3;
+        }
+
+        /* Bottom bar */
+        .card-footer-bar {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 18px;
+            background: #3D5A80;
+            border-radius: 0 0 3px 3px;
+            z-index: 3;
+        }
+
+        .card-content {
+            z-index: 2;
+            position: relative;
+            padding: 30px 22px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.55;
+            letter-spacing: 0.02em;
+            font-family: 'Trebuchet MS', Arial, sans-serif;
+        }
+
+        /* --- Back --- */
+        .back {
+            padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            text-align: center;
-            color: #333;
-            font-family: 'Trebuchet MS', Arial, sans-serif;
-            padding: 25px;
-            font-size: 20px;
-            position: relative;
-            box-sizing: border-box;
-            background-color: white;
         }
-        .back {
-            border: 2px solid #eee;
+        .back svg.puzzle {
+            width: 68%;
+            height: 68%;
+        }
+
+        /* ============================================================
+           SCREEN-ONLY PREVIEW LABELS
+           ============================================================ */
+        .sheet-label {
+            display: none;
+        }
+        @media screen {
+            .sheet-label {
+                display: block;
+                text-align: center;
+                font-size: 12px;
+                color: #444;
+                font-family: Arial, sans-serif;
+                margin-bottom: 6px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="card-container" id="task-card-container"></div>
-    <div class="back-container" id="task-back-container"></div>
-    <div class="kant-container" id="kants-p1-container"></div>
-    <div class="back-container" id="kants-p1-back-container"></div>
-    <div class="kant-container" id="kants-p2-container"></div>
-    <div class="back-container" id="kants-p2-back-container"></div>
+    <div id="cards-container"></div>
+
 <script>
+// ---------------------------------------------------------------------------
+// helpers
+// ---------------------------------------------------------------------------
 
+function makeGuides(sheet) {
+    /* Two horizontal + two vertical cut-guide lines.
+       Positioned at the mid-point of each 2 mm gap.            */
+    const cellH = (297 - 2*9 - 2*2) / 3;   /* mm */
+    const cellW = (210 - 2*9 - 2*2) / 3;   /* mm */
+    const pad   = 9;                          /* mm */
+    const gap   = 2;                          /* mm */
 
-function cardBorder(d3sel) {
-    d3sel.append("div")
-        .style("position", "absolute")
-        .style("top", "8px")
-        .style("left", "8px")
-        .style("right", "8px")
-        .style("bottom", "8px")
-        .style("border", "4px solid #40637f")
-        .style("border-radius", "12px")
-        .style("pointer-events", "none")
-        .style("z-index", "1");
-    d3sel.append("div")
-        .style("position", "absolute")
-        .style("top", "18px")
-        .style("left", "18px")
-        .style("right", "18px")
-        .style("bottom", "18px")
-        .style("border", "3px solid #40637f")
-        .style("border-radius", "6px")
-        .style("pointer-events", "none")
-        .style("z-index", "1");
+    [1, 2].forEach(i => {
+        const hg = document.createElement('div');
+        hg.className = 'guide h-guide';
+        hg.style.top = `${pad + i * cellH + (i - 0.5) * gap}mm`;
+        sheet.appendChild(hg);
+
+        const vg = document.createElement('div');
+        vg.className = 'guide v-guide';
+        vg.style.left = `${pad + i * cellW + (i - 0.5) * gap}mm`;
+        sheet.appendChild(vg);
+    });
+
+    /* Registration marks: + crosshairs at the 4 outer corners of
+       the card grid. Appear on both front and back pages at the
+       same grid coordinates — hold to a light to check alignment. */
+    const gridRight  = pad + 3 * cellW + 2 * gap;   /* 201 mm */
+    const gridBottom = pad + 3 * cellH + 2 * gap;   /* 288 mm */
+    const half = 4; /* mm — half the crosshair arm length */
+    [
+        [pad,       pad       ],   /* top-left     */
+        [gridRight, pad       ],   /* top-right    */
+        [pad,       gridBottom],   /* bottom-left  */
+        [gridRight, gridBottom],   /* bottom-right */
+    ].forEach(([x, y]) => {
+        const m = document.createElement('div');
+        m.className = 'reg-mark';
+        m.style.left = `${x - half}mm`;
+        m.style.top  = `${y - half}mm`;
+        sheet.appendChild(m);
+    });
 }
 
-// Load tasks.csv and kants.csv
-Promise.all([
-    d3.text("tasks.csv"),
-    d3.text("kants.csv")
-]).then(([tasksText, kantsText]) => {
-    // Parse CSVs as simple line lists
-    const tasks = tasksText.split(/\r?\n/).slice(1).filter(d => d.trim());
-    const kants = kantsText.split(/\r?\n/).slice(1).filter(d=>d.trim());
-    // Extract all names from kants CSV (split on comma, trim, flatten, dedupe)
-    const names = Array.from(
-        new Set(
-            kants
-                .map(d => d.split(","))
-                .flat()
-                .map(s => s.trim())
-                .filter(s => s)
-        )
-    );
+function makeCard(taskText) {
+    const card = document.createElement('div');
+    card.className = 'card';
 
-    console.log(names);
+    /* Top bar */
+    const banner = document.createElement('div');
+    banner.className = 'card-banner';
+    card.appendChild(banner);
 
-    const formatKant = d => {
-        const parts = d.split(",");
-        if (parts.length < 2) return d;
-        let from = parts[0].trim();
-        let to = parts[1].trim();
-        return `From: <b>${from}</b> <br> To: <b>${to}</b>`;
-    };
+    /* Bottom bar */
+    const footerBar = document.createElement('div');
+    footerBar.className = 'card-footer-bar';
+    card.appendChild(footerBar);
 
-    const boldNames = (text, names) => {
-        console.log(text);
-        console.log(names);
-        // Escape regex special characters in names
-        const escapedNames = names
-            .filter(name => name && name.length > 0)
-            .sort((a, b) => b.length - a.length) // longest first to avoid partial matches
-            .map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        if (escapedNames.length === 0) return text;
-        const regex = new RegExp(`\\b(${escapedNames.join('|')})\\b`, 'g');
-        return text.replace(regex, '<b>$1</b>');
+    const content = document.createElement('div');
+    content.className = 'card-content';
+    content.textContent = taskText.replace(/^"|"$/g, '');  /* strip CSV quotes */
+    card.appendChild(content);
+
+    return card;
+}
+
+const CUTE_PALETTES = [
+    { bg: '#FFE4F0', body: '#FF85A1', eye: '#C41E6C', blush: '#FFAEC9' },
+    { bg: '#E4F5FF', body: '#6CB8FF', eye: '#1565C0', blush: '#A8D8FF' },
+    { bg: '#E4FFF4', body: '#5DD9A4', eye: '#1B6B47', blush: '#A5EDCB' },
+    { bg: '#F2E4FF', body: '#C47AFF', eye: '#7B1FA2', blush: '#DDB3FF' },
+    { bg: '#FFF0E4', body: '#FFB366', eye: '#BF4A00', blush: '#FFD4AD' },
+    { bg: '#FDFCE4', body: '#F0D84A', eye: '#7A6800', blush: '#FAF0A8' },
+    { bg: '#FFE8E4', body: '#FF7E6B', eye: '#B02010', blush: '#FFBDB5' },
+    { bg: '#E4F8FA', body: '#5BBFC8', eye: '#07616B', blush: '#A5DDE3' },
+];
+
+function makeBack() {
+    const p = CUTE_PALETTES[Math.floor(Math.random() * CUTE_PALETTES.length)];
+    const back = document.createElement('div');
+    back.className = 'back';
+    back.style.background = p.bg;
+    back.innerHTML = `
+        <svg class="puzzle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+          <!-- Puzzle body: top/right/bottom output tabs + left input socket (indent) -->
+          <path fill="${p.body}"
+            d="M40 40 H80 A20 20 0 0 1 120 40 H160
+               V80  A20 20 0 0 1 160 120 V160
+               H120 A20 20 0 0 1 80  160 H40
+               V120 A20 20 0 0 0 40  80  V40 Z"/>
+          <!-- Eyes — spread further apart -->
+          <circle fill="${p.eye}" cx="75"  cy="105" r="17"/>
+          <circle fill="#fff"    cx="68"  cy="98"  r="6"/>
+          <circle fill="#fff"    cx="82"  cy="114" r="3"/>
+
+          <circle fill="${p.eye}" cx="125" cy="105" r="17"/>
+          <circle fill="#fff"    cx="118" cy="98"  r="6"/>
+          <circle fill="#fff"    cx="132" cy="114" r="3"/>
+
+          <!-- Blush -->
+          <ellipse fill="${p.blush}" cx="57"  cy="124" rx="12" ry="7"/>
+          <ellipse fill="${p.blush}" cx="143" cy="124" rx="12" ry="7"/>
+
+          <!-- Smile — wider to match spread -->
+          <path d="M80 133 Q100 150 120 133" stroke="${p.eye}"
+                stroke-width="5" fill="none" stroke-linecap="round"/>
+        </svg>`;
+    return back;
+}
+
+function makePlaceholder(className) {
+    const ph = document.createElement('div');
+    ph.className = className;
+    ph.style.visibility = 'hidden';
+    return ph;
+}
+
+// ---------------------------------------------------------------------------
+// main
+// ---------------------------------------------------------------------------
+
+d3.text("tasks.csv").then(raw => {
+    const tasks = raw.split(/\r?\n/).slice(1).filter(d => d.trim());
+
+    const COLS         = 3;
+    const ROWS         = 3;
+    const PER_SHEET    = COLS * ROWS;          /* 9 cards per side   */
+    const numSheets    = Math.ceil(tasks.length / PER_SHEET);
+    const totalPages   = numSheets * 2;
+
+    const container = document.getElementById('cards-container');
+
+    for (let s = 0; s < numSheets; s++) {
+        const slice = tasks.slice(s * PER_SHEET, s * PER_SHEET + PER_SHEET);
+        const empty = PER_SHEET - slice.length;
+
+        const fp = s * 2 + 1;    /* front page number */
+        const bp = s * 2 + 2;    /* back  page number */
+
+        /* ── FRONT ──────────────────────────────────────────────── */
+        const fl = document.createElement('div');
+        fl.className = 'sheet-label no-print';
+        fl.textContent = `FRONT — Sheet ${s+1} / ${numSheets}  ·  Page ${fp} of ${totalPages}  ·  (odd page)`;
+        container.appendChild(fl);
+
+        const front = document.createElement('div');
+        front.className = 'sheet';
+        front.id = `front-${s}`;
+        makeGuides(front);
+
+        slice.forEach(t => front.appendChild(makeCard(t)));
+        for (let i = 0; i < empty; i++) front.appendChild(makePlaceholder('card'));
+
+        container.appendChild(front);
+
+        /* ── BACK ───────────────────────────────────────────────── */
+        // For a long-edge flip the printer mirrors the sheet L<->R.
+        // To compensate we reorder cards so that within each row the
+        // columns are reversed: printed order [2,1,0, 5,4,3, 8,7,6].
+        // After the physical flip each back lands exactly behind its
+        // matching front — no CSS transforms, no rounding artifacts.
+        const backOrder = [];
+        for (let row = 0; row < ROWS; row++) {
+            for (let col = COLS - 1; col >= 0; col--) {
+                backOrder.push(row * COLS + col);
+            }
+        }
+
+        const bl = document.createElement('div');
+        bl.className = 'sheet-label no-print';
+        bl.textContent = `BACK  — Sheet ${s+1} / ${numSheets}  ·  Page ${bp} of ${totalPages}  ·  (even page)`;
+        container.appendChild(bl);
+
+        const back = document.createElement('div');
+        back.className = 'sheet back-side';
+        back.id = `back-${s}`;
+        makeGuides(back);
+
+        backOrder.forEach(idx => {
+            if (idx < slice.length) {
+                back.appendChild(makeBack());
+            } else {
+                back.appendChild(makePlaceholder('back'));
+            }
+        });
+
+        container.appendChild(back);
     }
-
-    // TASK CARDS
-    d3.select("#task-card-container")
-        .selectAll(".card")
-        .data(tasks)
-        .enter()
-        .append("div")
-        .attr("class", "card")
-        .html(d => `<div>${boldNames(d, names)}</div>`)
-        .each(function() { cardBorder(d3.select(this)); });
-
-    // TASK BACKS
-    d3.select("#task-back-container")
-        .selectAll(".back")
-        .data(tasks)
-        .enter()
-        .append("div")
-        .attr("class", "back")
-        .style("background", "#fff")
-        .html("<img src='backing-black.svg' style='width: 120%; border-radius: 12px;'>");
-
-    // KANTS P1 CARDS
-    d3.select("#kants-p1-container")
-        .selectAll(".card")
-        .data(kants)
-        .enter()
-        .append("div")
-        .attr("class", "card")
-        .html(d => `<div>${formatKant(d, names)}</div>`)
-        .each(function() { cardBorder(d3.select(this)); });
-
-    // KANTS P1 BACKS
-    d3.select("#kants-p1-back-container")
-        .selectAll(".back")
-        .data(kants)
-        .enter()
-        .append("div")
-        .attr("class", "back")
-        .style("background", "#823129")
-        .html("<img src='backing-white-red.svg' style='width: 120%; border-radius: 12px;'>");
-
-    // KANTS P2 CARDS
-    d3.select("#kants-p2-container")
-        .selectAll(".card")
-        .data(kants)
-        .enter()
-        .append("div")
-        .attr("class", "card")
-        .html(d => `<div>${formatKant(d, names)}</div>`)
-        .each(function() { cardBorder(d3.select(this)); });
-
-    // KANTS P2 BACKS
-    d3.select("#kants-p2-back-container")
-        .selectAll(".back")
-        .data(kants)
-        .enter()
-        .append("div")
-        .attr("class", "back")
-        .style("background", "#32506C")
-        .html("<img src='backing-white-blue.svg' style='width: 120%; border-radius: 12px;'>");
 });
 </script>
 </body>

@@ -1,92 +1,52 @@
-# Battlegraphs Card Generator
+# Happy Puzzles 🧩
 
-<img src="battlegraphs_teaser.png" alt="BattleGraphs Teaser" style="width:100%; display:block; margin-bottom: 1em;" />
+A print-and-play card game toolkit for exploring how people communicate, interpret, and construct abstract tasks — using puzzle pieces as a shared physical language.
 
-Battlegraphs Card Generator is a tool for creating custom cards for the Battlegraphs game. Easily generate, customize, and export cards for your own decks.
+## What is it?
 
-## About
+Happy Puzzles is a workshop game where players work with a deck of task cards and a set of physical puzzle pieces. Each card presents an analysis or reasoning task. Players use puzzle pieces to represent, communicate, and reconstruct those tasks — without necessarily using words.
 
-**Battlegraphs Card Generator** is part of the game *BattleGraphs: Forge, Fortify, and Fight in the Network Arena*, submitted to the [EuroVis 2025 Workshop on Visualization Play, Games, and Activities (VisGames)](https://visgames2025.netlify.app/).
+The game is designed to surface how differently people understand the same task, how meaning shifts when passed between people, and how breaking a task into components changes the way we think about it.
 
-> **Abstract**  
-> Constructive visualization enables users to create personalized data representations and facilitates early insight generation and sensemaking. Based on NODKANT, a toolkit for creating physical network diagrams using 3D printed parts, we define a competitive network physicalization game: BattleGraphs. In BattleGraphs, two players construct networks independently and compete in solving network analysis benchmark tasks. We propose a workshop scenario where we deploy our game, collect strategies for interaction and analysis from our players, and measure the effectiveness of the strategy with the success of the player to discuss in a reflection phase. Printable parts of the game, as well as instructions, are available through the Open Science Framework at https://osf.io/x6zv7/.
+## Card Deck
 
-## Installation
+The deck is generated from a CSV file of tasks and printed double-sided:
 
-```bash
-git clone https://github.com/velitchko/battlegraphs.git
-cd battlegraphs
-npm install
-```
+- **Front** — the task text, large and readable
+- **Back** — a unique cute puzzle character in a random colour, identical across all cards so backs don't reveal which task is which
 
-## Usage
+Cards are sized to standard poker card dimensions (≈ 63.5 × 88.9 mm), 9 per A4 sheet.
 
-Start the development server:
+## Printing
 
-```bash
-npm start
-```
+Open `index.html` in a browser (Chrome or Edge recommended) and use **File → Print** with these settings:
 
-Open your browser and navigate to `http://localhost:8080` to use the card generator.
+| Setting | Value |
+|---|---|
+| Paper size | A4 |
+| Scale | 100% (not "fit to page") |
+| Margins | None |
+| Pages per sheet | 1 |
+| Two-sided | Flip on long edge |
+| Color mode | **Color** |
+| Print backgrounds | ✅ On |
+| Headers and footers | ❌ Off |
 
+The sheet contains registration marks (`+` crosshairs) at the four corners of the card grid. Hold a printed sheet up to a light after printing to verify front/back alignment. If using a professional print service, export fronts and backs as separate PDFs and let them handle registration.
 
-## Customizing Edges and Tasks
+## Files
 
-You can customize the edges and tasks used in the card generator by replacing the contents of the `tasks.csv` and `kants.csv` files.  
-**Note:** The new files should follow the same format as the originals to ensure compatibility.
+| File | Purpose |
+|---|---|
+| `index.html` | Card generator — open in browser to preview and print |
+| `tasks.csv` | Task list — one task per row, edit to change card content |
+| `puzzle.svg` | Source puzzle character artwork |
+| `tmp_pdf/` | Working folder for exported PDFs |
 
+## Customising Tasks
 
-## Contributing
+Edit `tasks.csv` — the first row is a header and is skipped. Add or remove rows freely; the layout automatically adjusts the number of sheets.
 
-Contributions are welcome! Please open issues or submit pull requests for new features or bug fixes.
+## Tech
 
-## Citation
-
-If you use BattleGraphs or this card generator in your work, please cite:
-
-```bibtex
-@inproceedings{ehlers2025battlegraphs,
-  title     = {BattleGraphs: Forge, Fortify, and Fight in the Network Arena},
-  author    = {Ehlers, Henry and Pahr, Daniel and di Bartolomeo, Sara and Stoiber, Christina and Filipov, Velitchko},
-  booktitle = {Workshop on Visualization Play, Games, and Activities (VisGames), EuroVis 2025},
-  year      = {2025},
-  url       = {https://osf.io/x6zv7/}
-}
-```
-
-## Authors
-
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/henry-ehlers">
-        <img src="https://github.com/henry-ehlers.png" width="80" style="border-radius: 50%;" alt="Henry Ehlers"/><br/>
-        <sub><b>Henry Ehlers</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/dpahr">
-        <img src="https://github.com/dpahr.png" width="80" style="border-radius: 50%;" alt="Daniel Pahr"/><br/>
-        <sub><b>Daniel Pahr</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/picorana">
-        <img src="https://github.com/picorana.png" width="80" style="border-radius: 50%;" alt="Sara di Bartolomeo"/><br/>
-        <sub><b>Sara di Bartolomeo</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/NChristina">
-        <img src="https://github.com/NChristina.png" width="80" style="border-radius: 50%;" alt="Christina Stoiber"/><br/>
-        <sub><b>Christina Stoiber</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/velitchko">
-        <img src="https://github.com/velitchko.png" width="80" style="border-radius: 50%;" alt="Velitchko Filipov"/><br/>
-        <sub><b>Velitchko Filipov</b></sub>
-      </a>
-    </td>
-  </tr>
-</table>
+Pure HTML + CSS + JavaScript. Uses [D3.js](https://d3js.org) only for CSV loading. No build step, no dependencies to install — just open the file.

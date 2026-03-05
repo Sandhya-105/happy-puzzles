@@ -1,0 +1,24 @@
+<svg class="puzzle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+          <!-- Puzzle body: top/right/bottom output tabs + left input socket (indent) -->
+          <path fill="#fff"
+            d="M40 40 H80 A20 20 0 0 1 120 40 H160
+               V80  A20 20 0 0 1 160 120 V160
+               H120 A20 20 0 0 1 80  160 H40
+               V120 A20 20 0 0 0 40  80  V40 Z"/>
+          <!-- Eyes — spread further apart -->
+          <circle fill="#000" cx="75"  cy="105" r="17"/>
+          <circle fill="#fff"    cx="68"  cy="98"  r="6"/>
+          <circle fill="#fff"    cx="82"  cy="114" r="3"/>
+
+          <circle fill="#000" cx="125" cy="105" r="17"/>
+          <circle fill="#fff"    cx="118" cy="98"  r="6"/>
+          <circle fill="#fff"    cx="132" cy="114" r="3"/>
+
+          <!-- Blush -->
+          <ellipse fill="#f00" cx="57"  cy="124" rx="12" ry="7"/>
+          <ellipse fill="#f00" cx="143" cy="124" rx="12" ry="7"/>
+
+          <!-- Smile — wider to match spread -->
+          <path d="M80 133 Q100 150 120 133" stroke="#000"
+                stroke-width="5" fill="none" stroke-linecap="round"/>
+        </svg>
