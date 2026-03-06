@@ -21,7 +21,7 @@ Cards are sized to standard poker card dimensions (≈ 63.5 × 88.9 mm), 9 per A
 
 You need to start a web server to generate the set of cards (since a .csv file is being loaded).
 
-We recomment quickly running `python -m http.server` (if you do not have python installed just look for alternatives or local server setups).
+We recommend quickly running `python -m http.server` (if you do not have python installed just look for alternatives or local server setups).
 
 
 Open `index.html` in a browser and use **File → Print** (Ctrl+P) with these settings:
@@ -53,4 +53,4 @@ Edit `tasks.csv`: the first row is a header and is skipped. Add or remove rows f
 
 ## Tech
 
-Pure HTML + CSS + JavaScript. Uses [D3.js](https://d3js.org) only for CSV loading. No build step, no dependencies to install — just open the file.
+Pure HTML + CSS + JavaScript. Uses [D3.js](https://d3js.org) only for CSV loading. No build step, no dependencies to install.
