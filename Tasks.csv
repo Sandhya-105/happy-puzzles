@@ -1,0 +1,21 @@
+Task; Topic
+How did the speed of movement change over time or with respect to spatial position; transportation
+What were the trajectories of the objects during the interval [t1, t2]?; transportation
+How did the spatial distribution of observations of the species s change over the time?; geospatial
+What species and in which states were observed at the moment t in the area a?; geospatial
+What is the trend of the red group? Does it grow, does it shrink, does it remain stable, or is it unstable?; geospatial
+Compare a biological pathway to a pathway with the same functionality in a reference species.; biology
+Find all up-regulated genes in a biological pathway.; biology
+In a red-blue election results cartogram, find if it is a close election, or a “landslide win".; cartogram
+Given the shape of a state from the original map and shapes of two states from the cartogram, find out which of the two cartogram states corresponds to the state from the original map.; cartogram
+Find a group which has the longest (shortest) boundary with a given group.; network
+Find the cluster with the highest number of subclusters; network
+Find the closest (most similar) cluster to the set of points with specific characteristics (e.g., points that have identical movement).; network
+What is the density of the highlighted region of the bone marrow?; volume
+Looking through the sample longitudinally, count the number of fibers curving through the sample and the number of straight fibers.; volume
+How many steps would you have to make to get between node labor affairs organizations and field hospitals?; network
+How many patients may be infected in step t and how probable are these numbers?; epidemics
+How and to what extent will the information on social media achieve widespread diffusion across the world; social media
+Identify multi-polar patterns where several platforms import and export information simultaneously.; social media
+Compare the number of journal articles author A published in 2010 with the number of conference papers they published that year.; network
+Compare the coauthoring relationship between Authors A and B with that of B and C; network
